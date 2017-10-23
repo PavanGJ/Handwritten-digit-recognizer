@@ -1,7 +1,7 @@
 import datpro
 
 from _global import *
-from params import NNRATE,NHL,HLLENGTH,RATIO,OUT,ACT,NNREG,MNIST_TRAIN,MNIST_TEST,USPS_FOLDER
+from params import NNRATE,NHL,HLLENGTH,RATIO,OUT,NNREG,MNIST_TRAIN,MNIST_TEST
 
 
 class StochaisticGD(object):
@@ -432,21 +432,6 @@ class NeuralNetwork(object):
         print "Test Accuracy: ", 1-error
 
         #End of testing
-        ########################################################################
-        #Start of Testing on USPS dataset
-
-        print "Testing on USPS dataset"
-
-        [self.X_test,self.t_test] = datpro.USPS(USPS_FOLDER)
-        self.X_test = self.normalize(self.X_test)                               #normalize test dataset
-        self.X_test = self.bias(self.X_test)                                    #Add bias unit to the test dataset
-
-        #One Hot Encoding of the target values
-        self.t_test = self.oneHotEncode(self.t_test)
-
-        error = e.error(self.X_test,self.t_test,self.w)                         #Computing test error
-        print "Test Accuracy: ", 1-error
-
         ########################################################################
         end_time = time()
         print "Training Time: %ss"%((train_time-start_time))
