@@ -2,6 +2,8 @@
 
 This project was implemented as an assignment for the course _**CSE574 : Introduction to Machine Learning**_ at _University at Buffalo, The State University of New York_ in Fall 2016. The goal of the project is to develop and compare different Machine Learning systems to recognise and classify handwritten digits.
 
+To run the project use the command: <code>python main.py</code>.
+Change hyperparameters as required in params.py.
 ### Dataset ###
 
 The system developed was trained on [MNIST dataset](http://yann.lecun.com/exdb/mnist/). The dataset consists of 70,000 handwritten digit image samples and is partitioned to two sets containing 60,000 samples and 10,000 samples respectively. The larger of the sets is used for training and the smaller is utilized for testing. 
@@ -16,7 +18,7 @@ The following machine learning systems have been developed.
 * <b>Single-Layered Neural Network</b>
 > A single-layered neural network system was developed and trained on the dataset. The network utilized <b>Stochastic Gradient Descent</b> algorithm for weight optimizations and used <b>Sigmoid function</b> for hidden layer activation and a softmax regression output layer.
 
-Both the systems utilize Cross Entropy Error function as the loss function
+Both the systems utilize Cross Entropy Error function as the loss function.
 
 ### Hyperparameter Tuning ###
 
