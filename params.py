@@ -14,7 +14,7 @@ REG = 1
 NNREG = 0.0000
 
 #Precision Values
-PREC = 0.001
+PREC = 0.000001
 
 #Output Function Type
 #Possible values : 'SOFTMAX', 'SIGMOID'
@@ -28,3 +28,6 @@ NHL = 1
 
 #Hidden Layer Length
 HLLENGTH = 900
+
+#Number of Epochs
+EPOCHS = 5

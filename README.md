@@ -36,13 +36,23 @@ The results obtained are as follows:
 
     Dataset     | Accuracy
     :------------:|:------------------:
-    **Validation**  | 91.6%
-    **Test**        | 91.67%
+	**Training**    | 92.48%
+    **Validation**  | 92.29%
+    **Test**        | 92.27%
+	
+	* Accuracy graph
+	
+	<img src="/res/accuracy_iteration_softmax.png" width= "50%">
+	
+	* Loss graph
+	
+	<img src="/res/loss_iteration_softmax.png" width= "50%">
 
 * <b>Single-Layered Neural Network</b>
 
     Dataset     | Accuracy
     :------------:|:------------------:
+	**Training**	| 93.03%
     **Validation**  | 93.26%
     **Test**        | 92.98%
 

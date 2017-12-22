@@ -24,20 +24,20 @@ class StochaisticGD(object):
         return a
 
     def backprop(self,A,w,t,y):
-        #Method to perform back propogation to calculate the gradient for the weights
+        #Method to perform back propagation to calculate the gradient for the weights
         #Inputs:
         #           A       ->  Activation matrix
         #           w       ->  weights of the system
         #           t       ->  Target values
         #           y       ->  predicted target values
         #Outputs:
-        #           d       ->  Backpropagation differences
+        #           d       ->  Back propagation differences
 
         m = len(w)
 
-        #Backpropagation for output layer
+        #Back propagation for output layer
         d = [y-t]
-        #Backpropagation for all other layers
+        #Back propagation for all other layers
         for i in range(m):
             index = (m-1)-i
             z = np.dot(w[index].transpose(),d[-1])*self.derivative(A[index])
@@ -61,7 +61,7 @@ class StochaisticGD(object):
         return d
 
     def feedforward(self,X,w):
-        #Method to perform feed forward propogation as an intermediate step in calculation of gradients for the weights
+        #Method to perform feed forward propagation as an intermediate step in calculation of gradients for the weights
         #Inputs:
         #           X       ->  Input feature
         #           w       ->  Weights of the regression system
@@ -77,7 +77,7 @@ class StochaisticGD(object):
             z = np.dot(w[i],A[-1])
             A.append(self.activation(z))
 
-        #Feed forward propogation for output layer
+        #Feed forward propagation for output layer
         z = np.dot(w[i+1],A[-1])
         y = self.output(z)
 
@@ -111,7 +111,7 @@ class StochaisticGD(object):
         #           X       ->  Input feature matrix
         #           T       ->  Target matrix
         #           w       ->  Initial weights of the regression system
-        #Outpus:
+        #Outputs:
         #           No outputs
         m = X.shape[0]
         M = X.shape[1]
@@ -170,13 +170,13 @@ class Error(object):
         #           X       ->  Input feature matrix
         #           T       ->  Target matrix
         #           w       ->  Weights of the regression system
-        #Outpus:
+        #Outputs:
         #           e       ->  Error value
 
         #Error checking
         if w.shape[0] != NHL+1:                                                 #Error checking to check if the required number of weight
                                                                                 #have been provided
-            print "Weights not in congruence with the system"
+            print("Weights not in congruence with the system")
             exit(0)
         #End of error checking
 
@@ -191,7 +191,7 @@ class Error(object):
                 z = np.dot(w[j],A[-1])
                 A.append(self.activation(z))
 
-            #Feed forward propogation for output layer
+            #Feed forward propagation for output layer
             z = np.dot(w[j+1],A[-1])
             h = self.output(z)
 
@@ -237,7 +237,7 @@ class NeuralNetwork(object):
         try:
             (M,N) = X.shape
         except:
-            print "DimensionError: Input Feature Matrix dimensions not as specified"
+            print("DimensionError: Input Feature Matrix dimensions not as specified")
             exit(0)
 
         X = np.concatenate((np.ones((M,1)),X),axis=1)                           #Concatenating a bias value
@@ -248,7 +248,7 @@ class NeuralNetwork(object):
         #Method to split data into train and validation sets
         #Inputs:
         #       ratio   ->  Split ratio
-        #Outpus:
+        #Outputs:
         #       [train,validate]    ->  Train set and Validation set
 
         #Method initializations
@@ -287,10 +287,10 @@ class NeuralNetwork(object):
         #Error Checking
         try:
             if t.shape[1]!=1:
-                print "DimensionError:  should be a row matrix"
+                print("DimensionError:  should be a row matrix")
                 exit(0)
         except:
-            print "DimensionError:  should be a row matrix"
+            print("DimensionError:  should be a row matrix")
             exit(0)
         #End of error checking
 
@@ -347,17 +347,17 @@ class NeuralNetwork(object):
         #Method to predict the values
         #Inputs:
         #           X       ->  Input feature matrix
-        #Outpus:
+        #Outputs:
         #           e       ->  Error value
 
         #Error checking
         try:
             if X.shape[1] != self.w[0].shape[0] :                               #Error checking to check if the required number of weight
                                                                                 #have been provided
-                print "Weights not in congruence with the system"
+                print("Weights not in congruence with the system")
                 exit(0)
         except:
-            print "DimensionError: The input should be a 2D Matrix"
+            print("DimensionError: The input should be a 2D Matrix")
             exit(0)
         #End of error checking
 
@@ -372,7 +372,7 @@ class NeuralNetwork(object):
                 z = np.dot(self.w[j],A[-1])
                 A.append(self.activation(z))
 
-            #Feed forward propogation for output layer
+            #Feed forward propagation for output layer
             z = np.dot(self.w[j+1],A[-1])
             h = self.output(z)
             y = np.concatenate((y,h),axis=0)
@@ -416,8 +416,11 @@ class NeuralNetwork(object):
         #One Hot Encoding of the target values
         t_validate = self.oneHotEncode(t_validate)
 
+        error = e.error(X_train,t_train,self.w)
+        print("Training Accuracy: %.4f"%(1 - error))
+		
         error = e.error(X_validate,t_validate,self.w)                                #Compute error using validation set
-        print "Accuracy: ", 1-error
+        print("Validation Accuracy: %.4f"%(1-error))
         #End of validation
         ########################################################################
         #Start of testing
@@ -429,13 +432,13 @@ class NeuralNetwork(object):
         self.t_test = self.oneHotEncode(self.t_test)
 
         error = e.error(self.X_test,self.t_test,self.w)                              #Computing test error
-        print "Test Accuracy: ", 1-error
+        print("Test Accuracy: %.4f"%(1-error))
 
         #End of testing
         ########################################################################
         end_time = time()
-        print "Training Time: %ss"%((train_time-start_time))
-        print "Total Time: %ss"%((end_time-start_time))
+        print("Training Time: %ss"%((train_time-start_time)))
+        print("Total Time: %ss"%((end_time-start_time)))
 
 
     def train(self,X,t):
@@ -450,7 +453,7 @@ class NeuralNetwork(object):
             m = X.shape[1]
             n = t.shape[1]
         except:
-            print "DimensionError: dimensions of inputs not as specified"
+            print("DimensionError: dimensions of inputs not as specified")
             exit(0)
 
         #Initializing the weight matrix

@@ -10,6 +10,7 @@ class BatchGD(object):
         self.rate = RATE                                                        #Learning Rate
         self.reg = REG                                                          #Regularization Constant
         self.prec = PREC                                                        #Cost precision required
+        self.error = Error().error
 
     def costFunction(self,X,t,w):
         #Method to compute the cost of the system with respect to the inputs, current weights and target values
@@ -17,7 +18,7 @@ class BatchGD(object):
         #           X       ->  Input feature matrix
         #           t       ->  Target matrix
         #           w       ->  Weights of the regression system
-        #Outpus:
+        #Outputs:
         #           J       ->  Cost of the regression system with the weights
 
         #Method initializations
@@ -25,22 +26,9 @@ class BatchGD(object):
         #End of initializations
 
         h = self.output(np.dot(X,w))                                            #   h   ->  hypothesis
-        t = t.transpose()
-        #Calculating log values to be used for cost computations
-        hp1 = h.copy()                                                          #hp1    ->  hypothesis part 1
-        hp1[hp1==0] = 10**-10                                                   #To eliminate the possibility of a log(0) = infinity
-        logh = np.log(hp1)                                                      #logh = log(h)
-        hp2 = 1 - h                                                             #hp2    ->  hypothesis part 2
-        hp2[hp2==0] = 10**-10                                                   #To eliminate the possibility of a log(0) = infinity
-        lognh = np.log(hp2)                                                     #lognh = log(1-h)
-
-        #Setting the infinity values to 0
-        logh[np.abs(logh)>=np.inf] = 1E308                                      #log(h) with infinity values scaled to 1x10^308
-        lognh[np.abs(lognh)>=np.inf] = 1E308                                    #log(1-h) with infinity values scaled to 1x10^308
-
-        cost = -(np.dot(t,logh)+np.dot((1-t),lognh))                            #Cost matrix
-        cost += self.reg * np.dot(w.transpose(),w)/(2)                          #Performing regularization
-        J = np.sum(cost,axis=0)/m                                               #Computing average cost for each subsystem
+        cost = -np.sum((t*np.log(h)), axis = 0)									#Cost matrix
+        reg = self.reg * np.sum(w * w, axis = 0)/2                          	#Performing regularization
+        J = (cost + reg)/m                                            			#Computing average cost for each subsystem
 
         return J
 
@@ -50,7 +38,7 @@ class BatchGD(object):
         #           X       ->  Input feature matrix
         #           t       ->  Target matrix
         #           w       ->  Weights of the regression system
-        #Outpus:
+        #Outputs:
         #           grad    ->  Gradient
 
         #Method initializations
@@ -63,45 +51,52 @@ class BatchGD(object):
 
         return grad
 
-    def gradientDescent(self,X,t,w):
+    def gradientDescent(self,X,t,w,val_X,val_t):
         #Method to perform Gradient Descent.
         #Inputs:
-        #           X       ->  Input feature matrix
-        #           t       ->  Target matrix
-        #           w       ->  Initial weights of the regression system
-        #Outpus:
-        #           w       ->  Finalized weights
-
+        #           X       	->  Input feature matrix
+        #           t       	->  Target matrix
+        #           w       	->  Initial weights of the regression system
+		#			val_X		->	Validation set feature matrix
+		#			val_t		->	Validation set target matrix
+        #Outputs:
+        #           w       	->  Finalized weights
+		#			J			->	list of costs
+		#			train_loss	->	list of train losses
+		#			train_acc	->	list of train accuracies
+		#			val_loss	->	list of validation losses
+		#			val_acc		->	list of validation accuracies
+		
         #Entry point error checking
         #First check: to ensure that the target matrix is a two dimensional array
         try:
             (m,n) = t.shape
         except:
-            print "DimensionError: target matrix dimensions are not congruent with the specification"
+            print("DimensionError: target matrix dimensions are not congruent with the specification")
             exit(0)
 
         #Second check: to ensure that the feature matrix is a two dimensional array
         try:
             (M,N) = X.shape
         except:
-            print "DimensionError: feature matrix dimensions are not congruent with the specification"
+            print("DimensionError: feature matrix dimensions are not congruent with the specification")
             exit(0)
 
         #Third check: to ensure that the weight matrix is a two dimensional array
         try:
             (wN,wn) = w.shape
         except:
-            print "Dimension Error: weight matrix dimensions are not congruent with the specifications"
+            print("Dimension Error: weight matrix dimensions are not congruent with the specifications")
             exit(0)
 
         #Fourth check: to ensure the target matrix and feature matrix have the same number of samples
         if m != M:
-            print "DimensionError: number of samples in feature matrix and target matrix vary"
+            print("DimensionError: number of samples in feature matrix and target matrix vary")
             exit(0)
 
         #Fifth check: to ensure dimensions of the weight matrix is congruent with the input data
         if wN != N or wn != n:
-            print "DimensionError: weight matrix dimensions are not congruent with the input data"
+            print("DimensionError: weight matrix dimensions are not congruent with the input data")
             exit(0)
         #End of error checking
 
@@ -109,12 +104,26 @@ class BatchGD(object):
         m = t.shape[0]                                                          #   m  ->  Size of sample
         c = t.shape[1]                                                          #   c  ->  Number of classes
         rate = np.ones((1,c))*self.rate                                         #   rate  ->  Learning Rates for all classes
+        train_loss = []
+        train_acc = []
+        val_loss = []
+        val_acc = []
         #End of initializations
 
         J = []                                                                  #An array to store the Costs
         init_cost = self.costFunction(X,t,w)                                    #Computing the initial Cost
         J.append(init_cost)
-
+        print("Step %d: [ Loss: %.4f, Accuracy: %.4f, Val Loss: %.4f, Val Accuracy: %.4f ]"%(
+            len(J) - 1,
+            np.sum(J[-1]),
+            1 - self.error(X,t,w),
+            np.sum(self.costFunction(val_X,val_t,w)),
+            1 - self.error(val_X,val_t,w)))
+			
+        train_loss.append(np.sum(J[-1]))
+        train_acc.append(1 - self.error(X,t,w))
+        val_loss.append(np.sum(self.costFunction(val_X,val_t,w)))
+        val_acc.append(1 - self.error(val_X,val_t,w))
 
         loop = True                                                             #Loop flag
         while(loop):
@@ -122,11 +131,22 @@ class BatchGD(object):
             w = w - (rate * grad)                                               #Updating weights
             cost = self.costFunction(X,t,w)                                     #Computing the system cost with new weights
             J.append(cost)
+            if((len(J)-1)%50==0):
+                print("Step %d: [ Loss: %.4f, Accuracy: %.4f, Val Loss: %.4f, Val Accuracy: %.4f ]"%(
+                    len(J) - 1,
+                    np.sum(J[-1]),
+                    1 - self.error(X,t,w),
+                    np.sum(self.costFunction(val_X,val_t,w)),
+                    1 - self.error(val_X,val_t,w)))
+                train_loss.append(np.sum(J[-1]))
+                train_acc.append(1 - self.error(X,t,w))
+                val_loss.append(np.sum(self.costFunction(val_X,val_t,w)))
+                val_acc.append(1 - self.error(val_X,val_t,w))
             rate = ((np.abs(J[-1]-J[-2]))>=self.prec) * rate
             if ((np.abs(J[-1]-J[-2]))<=self.prec).all():                        #If desired precision achieved
                 loop = False                                                    #Loop is set to end
 
-        return w
+        return w, J, [train_loss,val_loss],[train_acc,val_acc]
 
     def output(self,z):
         #Method to compute the output value of given input
@@ -159,7 +179,7 @@ class Error(object):
         #           X       ->  Input feature matrix
         #           t       ->  Target matrix
         #           w       ->  Initial weights of the regression system
-        #Outpus:
+        #Outputs:
         #           e       ->  Error value
 
         #Method initializations
@@ -211,7 +231,7 @@ class LogReg(object):
         try:
             (M,N) = X.shape
         except:
-            print "DimensionError: Input Feature Matrix dimensions not as specified"
+            print("DimensionError: Input Feature Matrix dimensions not as specified")
             exit(0)
 
         X = np.concatenate((np.ones((M,1)),X),axis=1)                           #Concatenating a bias value
@@ -222,7 +242,7 @@ class LogReg(object):
         #Method to split data into train and validation sets
         #Inputs:
         #       ratio   ->  Split ratio
-        #Outpus:
+        #Outputs:
         #       [train,validate]    ->  Train set and Validation set
 
         #Method initializations
@@ -261,10 +281,10 @@ class LogReg(object):
         #Error Checking
         try:
             if t.shape[1]!=1:
-                print "DimensionError:  should be a row matrix"
+                print("DimensionError:  should be a row matrix")
                 exit(0)
         except:
-            print "DimensionError:  should be a row matrix"
+            print("DimensionError:  should be a row matrix")
             exit(0)
         #End of error checking
 
@@ -320,17 +340,17 @@ class LogReg(object):
         #Method to predict the values
         #Inputs:
         #           X       ->  Input feature matrix
-        #Outpus:
+        #Outputs:
         #           h       ->  Predicted values
 
         #Error checking
         try:
             if X.shape[1] != self.w.shape[0] :                                  #Error checking to check if the required number of weight
                                                                                 #have been provided
-                print "Weights not in congruence with the system"
+                print("Weights not in congruence with the system")
                 exit(0)
         except:
-            print "DimensionError: The input should be a 2D Matrix"
+            print("DimensionError: The input should be a 2D Matrix")
             exit(0)
         #End of error checking
 
@@ -354,18 +374,24 @@ class LogReg(object):
         self.X_train = self.bias(self.X_train)                                  #Adding a bias value
         [train,validate] = self.data_split(RATIO)                               #Split input data based on the ratio
         e = Error()                                                             #Initializing error class
-        #End of initializations
+		
+		#Extracting Feature Matrices and Target values for training dataset
+        [X_train,t_train] = train
+		
+		#One Hot Encoding of the target values
+        t_train = self.oneHotEncode(t_train)
+		
+		#Extracting Feature Matrices and Target values
+        [X_validate,t_validate] = validate
+		
+		#One Hot Encoding of the target values
+        t_validate = self.oneHotEncode(t_validate)
+        
+		#End of initializations
         ########################################################################
         #Start of Training
-
-        #Extracting Feature Matrices and Target values for training dataset
-        [X_train,t_train] = train
-
-        #One Hot Encoding of the target values
-        t_train = self.oneHotEncode(t_train)
-
-        print "Training the system. Please Wait"                                #Message for the user
-        self.w = self.train(X_train,t_train)                                    #Train the system
+        print("\nTraining the system. Please Wait\n")                     		#Message for the user
+        self.w = self.train(X_train,t_train,X_validate,t_validate)				#Train the system
 
         train_time = time()                                                     #Storing the end of training time stamp
 
@@ -373,19 +399,14 @@ class LogReg(object):
         ########################################################################
         #Start of validation
 
-        #Extracting Feature Matrices and Target values
-        [X_validate,t_validate] = validate
-
-        #One Hot Encoding of the target values
-        t_validate = self.oneHotEncode(t_validate)
-
+        train_error = e.error(X_train,t_train,self.w)                           #Compute error using training set
         error = e.error(X_validate,t_validate,self.w)                           #Compute error using validation set
-        print "Validation Accuracy: ", 1-error
+        print("Training Accuracy: %.4f"%(1-train_error)) 
+        print("Validation Accuracy: %.4f"%(1-error))
         #End of validation
         ########################################################################
         #Start of testing
-
-        print "Testing the system.Please Wait"
+        print("\nTesting the system.Please Wait\n")
         self.X_test = self.normalize(self.X_test)                               #normalize test dataset
         self.X_test = self.bias(self.X_test)                                    #Add bias unit to the test dataset
 
@@ -393,20 +414,22 @@ class LogReg(object):
         self.t_test = self.oneHotEncode(self.t_test)
 
         error = e.error(self.X_test,self.t_test,self.w)                         #Computing test error
-        print "Test Accuracy: ", 1-error
+        print("Test Accuracy: %.4f"%(1-error))
 
         #End of testing
         ########################################################################
         end_time = time()
-        print "Training Time: %ss"%((train_time-start_time))
-        print "Total Time: %ss"%((end_time-start_time))
+        print("Training Time: %ss"%((train_time-start_time)))
+        print("Total Time: %ss"%((end_time-start_time)))
 
 
-    def train(self,X,t):
+    def train(self,X,t,val_X,val_t):
         #Method to train the Logistic regression
         #Inputs:
         #       X       ->  Input feature matrix
         #       t       ->  Target values
+		#		val_X	->	Validation set feature matrix
+		#		val_t	->	Validation set target matrix
         #Outputs:
         #       w       ->  trained weights
         #Extracting dimensions of the weight matrix
@@ -414,7 +437,7 @@ class LogReg(object):
             m = X.shape[1]
             n = t.shape[1]
         except:
-            print "DimensionError: dimensions of inputs not as specified"
+            print("DimensionError: dimensions of inputs not as specified")
             exit(0)
 
         #Initializing the weight matrix
@@ -423,6 +446,24 @@ class LogReg(object):
         #Initializing gradient descent algorithm based on the type mentioned
         gradDescent = BatchGD()
 
-        w = gradDescent.gradientDescent(X,t,w)                                  #Performing gradientDescent
-
+        w, J, loss, acc = gradDescent.gradientDescent(X,t,w,val_X,val_t)		#Performing gradientDescent
+		
+        [train,val] = acc
+        plt.plot(np.arange(len(J), step = 50), train, color='r', label="Training")
+        plt.plot(np.arange(len(J), step = 50), val, color = 'b', label="Validation") 
+        plt.title("Accuracy vs Iterations")
+        plt.xlabel("Number of Iterations")
+        plt.ylabel("Accuracy")
+        plt.legend()
+        plt.show()
+		
+        [train,val] = loss
+        plt.plot(np.arange(len(J), step = 50), train, color='r', label="Training")
+        plt.plot(np.arange(len(J), step = 50), val, color = 'b', label="Validation")
+        plt.title("Loss vs Iterations")
+        plt.xlabel("Number of Iterations")
+        plt.ylabel("Loss")
+        plt.legend()
+        plt.show()
+		
         return w
